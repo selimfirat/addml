@@ -6,6 +6,7 @@ from pyod.models.knn import KNN
 from scipy.spatial.distance import cdist
 from sklearn.utils import shuffle
 from torch.optim import Adam
+import numpy as np
 
 
 def stochastic_instance_closeness_pdist_loss(mX, easy_ratio, hard_ratio):
@@ -94,14 +95,14 @@ class FFNeuralNetwork(torch.nn.Module):
 class NNTrainer:
 
     def __init__(self, model_cls, metric_dim, num_epochs, lr, weight_decay, val_size, mini_batch_size, patience,
-                 num_hidden_neurons, num_hidden_neurons2, device, loss, normal_ratio, anomaly_ratio, easy_ratio,
+                 num_hidden_neurons, num_hidden_neurons2, device, normal_ratio, anomaly_ratio, easy_ratio,
                  hard_ratio, **kwargs):
 
         self.hard_ratio = hard_ratio
         self.easy_ratio = easy_ratio
         self.normal_ratio = normal_ratio
         self.anomaly_ratio = anomaly_ratio
-        self.loss = loss
+        self.loss = None
         self.mini_batch_size = mini_batch_size
         self.val_size = val_size
         self.model_cls = model_cls
@@ -144,7 +145,11 @@ class NNTrainer:
     def fit(self, X):
         X = torch.Tensor(X)
 
-        self.model = self.model_cls(input_dim=X.shape[1], output_dim=self.metric_dim, num_hidden_neurons=self.num_hidden_neurons, num_hidden_neurons2=self.num_hidden_neurons2, device=self.device).to(self.device)
+        self.model = self.model_cls(input_dim=X.shape[1],
+                                    output_dim=self.metric_dim,
+                                    num_hidden_neurons=self.num_hidden_neurons,
+                                    num_hidden_neurons2=self.num_hidden_neurons2,
+                                    device=self.device).to(self.device)
 
         # self.model.apply(lambda m: torch.nn.init.kaiming_uniform_(m.weight.data) if hasattr(m, 'weight') else None)
         self.model.apply(lambda m: torch.nn.init.xavier_uniform(m.weight.data) if hasattr(m, 'weight') else None)
